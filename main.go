@@ -6,12 +6,11 @@ import (
 	"time"
 
 	"gotilegame/config"
+	"gotilegame/screens/start"
 
 	"github.com/faiface/gui"
 	"github.com/faiface/gui/win"
 	"github.com/faiface/mainthread"
-
-	"gotilegame/screens/start"
 )
 
 var ev *config.Env
@@ -31,14 +30,17 @@ func init() {
 	}()
 }
 
-func main() {
+func run() {
 	w, err := win.New(win.Title(ev.Cfg.Title), win.Size(800, 600))
 	if err != nil {
 		panic(err)
 	}
 
 	mux, env := gui.NewMux(w)
-
 	ss := start.New(w, mux, env)
-	mainthread.Run(ss.Run)
+	ss.Run()
+}
+
+func main() {
+	mainthread.Run(run)
 }
