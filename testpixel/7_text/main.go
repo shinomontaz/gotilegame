@@ -29,6 +29,7 @@ func run() {
 	if err != nil {
 		panic(err)
 	}
+	
 	basicAtlas := text.NewAtlas(face, text.ASCII)
 	basicTxt := text.New(pixel.V(100, 500), basicAtlas)
 	basicTxt.Color = colornames.Red
