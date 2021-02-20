@@ -9,6 +9,32 @@ import (
 	"golang.org/x/image/colornames"
 )
 
+type Ctrl struct {
+	Exit    bool
+	nav     chan string
+	log     chan string
+	Current string
+}
+
+func (c *Ctrl) Navigate(to string) {
+	c.Current = to
+}
+
+func (c *Ctrl) Quit() {
+	c.Exit = true
+}
+
+func (c *Ctrl) Log(msg string) {
+	c.log <- msg
+}
+
+func NewController() *Ctrl {
+	return &Ctrl{
+		nav: make(chan string),
+		log: make(chan string),
+	}
+}
+
 func run() {
 
 	cfg := pixelgl.WindowConfig{
@@ -27,14 +53,19 @@ func run() {
 		panic(err)
 	}
 	basicAtlas := text.NewAtlas(face, text.ASCII)
-	//	basicTxt := text.New(pixel.V(100, 500), basicAtlas)
-	//	basicTxt.Color = colornames.Red
 
-	fscreen := menu.NewMain(basicAtlas)
+	ctrl := NewController()
 
-	for !win.Closed() {
+	//	go ctrl.Run()
+
+	registry := make(map[string]*menu.Menu)
+	registry["firstcreen"] = menu.NewMain(basicAtlas, ctrl)
+	registry["secondcreen"] = menu.NewSec(basicAtlas, ctrl)
+	ctrl.Navigate("firstcreen")
+
+	for !win.Closed() && !ctrl.Exit {
 		win.Clear(colornames.Whitesmoke)
-		fscreen.Draw(win)
+		registry[ctrl.Current].Draw(win)
 		win.Update()
 	}
 }

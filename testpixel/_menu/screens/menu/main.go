@@ -15,6 +15,7 @@ type Menu struct {
 	curr         int
 	defaultColor color.Color
 	selectColor  color.Color
+	c            Controller
 }
 
 type Item struct {
@@ -26,16 +27,56 @@ type Item struct {
 	txt      *text.Text
 }
 
-func NewMain(atlas *text.Atlas) *Menu {
+type Controller interface {
+	Navigate(to string)
+	Quit()
+	Log(msg string)
+}
+
+func NewMain(atlas *text.Atlas, c Controller) *Menu {
 	m := &Menu{
 		items:        []Item{},
 		defaultColor: colornames.Blue,
 		selectColor:  colornames.Red,
+		c:            c,
 	}
 
-	m.AddItem("first", atlas, func() { m.curr = 0; fmt.Println("first") })
-	m.AddItem("second", atlas, func() { m.curr = 1; fmt.Println("second") })
-	m.AddItem("third", atlas, func() { m.curr = 2; fmt.Println("third") })
+	m.AddItem("New game", atlas, func() {
+		m.curr = 0
+		fmt.Println("New game")
+	})
+	m.AddItem("Load", atlas, func() {
+		m.curr = 1
+		fmt.Println("second")
+	})
+	m.AddItem("Options", atlas, func() {
+		m.curr = 2
+		m.c.Navigate("secondcreen")
+	})
+	m.AddItem("Quit", atlas, func() {
+		fmt.Println("quit")
+		m.curr = 3
+		m.c.Quit()
+	})
+
+	return m
+}
+
+func NewSec(atlas *text.Atlas, c Controller) *Menu {
+	m := &Menu{
+		items:        []Item{},
+		defaultColor: colornames.Blue,
+		selectColor:  colornames.Red,
+		c:            c,
+	}
+
+	m.AddItem("2 another", atlas, func() { m.curr = 0; fmt.Println("2 first") })
+	m.AddItem("2 second", atlas, func() { m.curr = 1; fmt.Println("2 second") })
+	m.AddItem("return", atlas, func() {
+		fmt.Println("return")
+		m.curr = 2
+		m.c.Navigate("firstcreen")
+	})
 
 	return m
 }
