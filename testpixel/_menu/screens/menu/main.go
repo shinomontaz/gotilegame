@@ -44,6 +44,7 @@ func NewMain(atlas *text.Atlas, c Controller) *Menu {
 	m.AddItem("New game", atlas, func() {
 		m.curr = 0
 		fmt.Println("New game")
+		m.c.Navigate("game")
 	})
 	m.AddItem("Load", atlas, func() {
 		m.curr = 1

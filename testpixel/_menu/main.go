@@ -1,6 +1,7 @@
 package main
 
 import (
+	"menutest/screens/game"
 	"menutest/screens/menu"
 
 	"github.com/faiface/pixel"
@@ -35,6 +36,10 @@ func NewController() *Ctrl {
 	}
 }
 
+type Screen interface {
+	Draw(win *pixelgl.Window)
+}
+
 func run() {
 
 	cfg := pixelgl.WindowConfig{
@@ -58,9 +63,11 @@ func run() {
 
 	//	go ctrl.Run()
 
-	registry := make(map[string]*menu.Menu)
+	registry := make(map[string]Screen)
 	registry["firstcreen"] = menu.NewMain(basicAtlas, ctrl)
 	registry["secondcreen"] = menu.NewSec(basicAtlas, ctrl)
+	registry["game"] = game.New(ctrl)
+
 	ctrl.Navigate("firstcreen")
 
 	for !win.Closed() && !ctrl.Exit {
