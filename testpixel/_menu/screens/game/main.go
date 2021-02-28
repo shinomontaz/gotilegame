@@ -11,8 +11,11 @@ import (
 	"sync"
 	"time"
 
+	"menutest/components"
+
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/pixelgl"
+	"github.com/faiface/pixel/text"
 	"golang.org/x/image/colornames"
 )
 
@@ -37,9 +40,11 @@ type Game struct {
 	last        time.Time
 	dt          float64
 	mu          sync.Mutex
+	menu        *components.Menu
+	menuAtlas   *text.Atlas
 }
 
-func New(c Controller) *Game {
+func New(c Controller, a *text.Atlas) *Game {
 	return &Game{
 		c:           c,
 		state:       STATE_INIT,
@@ -47,20 +52,23 @@ func New(c Controller) *Game {
 		matrices:    make([]pixel.Matrix, 0),
 		trees:       make([]*pixel.Sprite, 0),
 		last:        time.Now(),
+		menuAtlas:   a,
 	}
 }
 
 func (g *Game) Prepare() {
 	rand.Seed(time.Now().UTC().UnixNano())
 
+	g.treesFrames = make([]pixel.Rect, 0)
+	g.matrices = make([]pixel.Matrix, 0)
+	g.trees = make([]*pixel.Sprite, 0)
+
 	dir, err := os.Getwd()
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println(dir)
 
 	path := dir + "\\sprites\\trees.png"
-	fmt.Println(path)
 	spritesheet, err := loadPicture(path)
 	if err != nil {
 		panic(err)
@@ -78,6 +86,22 @@ func (g *Game) Prepare() {
 	g.state = STATE_RDY
 	g.mu.Unlock()
 
+	m := &components.Menu{
+		Items:        []components.Item{},
+		DefaultColor: colornames.Blue,
+		SelectColor:  colornames.Red,
+		Active:       false,
+	}
+
+	m.AddItem("resume", g.menuAtlas, func() { m.Active = false })
+	m.AddItem("2 second", g.menuAtlas, func() { fmt.Println("2 second") })
+	m.AddItem("return", g.menuAtlas, func() {
+		g.state = STATE_INIT
+		g.c.Navigate("firstcreen")
+	})
+
+	g.menu = m
+
 	time.Sleep(5 * time.Second)
 }
 
@@ -91,6 +115,9 @@ func (g *Game) Draw(win *pixelgl.Window) {
 		g.DrawInit(win)
 	case STATE_RDY:
 		g.DrawRdy(win)
+		if g.menu.Active {
+			g.menu.Draw(win)
+		}
 	default:
 		log.Fatal("unknow game state")
 	}
@@ -113,6 +140,50 @@ func (g *Game) DrawRdy(win *pixelgl.Window) {
 	cam := pixel.IM.Scaled(camPos, camZoom).Moved(win.Bounds().Center().Sub(camPos))
 	win.SetMatrix(cam)
 
+	g.controls(&camPos, camSpeed, win, cam)
+
+	camZoom *= math.Pow(camZoomSpeed, win.MouseScroll().Y)
+
+	for i, tree := range g.trees {
+		tree.Draw(win, g.matrices[i])
+	}
+
+	g.last = time.Now()
+}
+
+func (g *Game) controls(camPos *pixel.Vec, camSpeed float64, win *pixelgl.Window, cam pixel.Matrix) {
+	if g.menu.Active {
+		g.controlsMenu(win)
+		return
+	}
+
+	g.controlsGame(win, camPos, camSpeed, cam)
+}
+
+func (g *Game) controlsMenu(win *pixelgl.Window) {
+	// if win.Pressed(pixelgl.KeyEscape) {
+	// 	//		win.SetMatrix(pixel.IM)
+	// 	fmt.Println("menu set to passive")
+	// 	g.menu.Active = false
+	// }
+
+	if win.JustPressed(pixelgl.KeyUp) {
+		g.menu.Up()
+	}
+	if win.JustPressed(pixelgl.KeyDown) {
+		g.menu.Down()
+	}
+	if win.JustPressed(pixelgl.KeyEnter) {
+		g.menu.Action()
+	}
+}
+
+func (g *Game) controlsGame(win *pixelgl.Window, camPos *pixel.Vec, camSpeed float64, cam pixel.Matrix) {
+	if win.JustPressed(pixelgl.KeyEscape) {
+		fmt.Println("menu set to active")
+		g.menu.Active = true
+	}
+
 	if win.JustPressed(pixelgl.MouseButtonLeft) {
 		tree := pixel.NewSprite(g.spritesheet, g.treesFrames[rand.Intn(len(g.treesFrames))])
 		g.trees = append(g.trees, tree)
@@ -120,9 +191,6 @@ func (g *Game) DrawRdy(win *pixelgl.Window) {
 		g.matrices = append(g.matrices, pixel.IM.Scaled(pixel.ZV, 3).Moved(mouse))
 	}
 
-	if win.Pressed(pixelgl.KeyEscape) {
-		g.c.Navigate("firstcreen")
-	}
 	if win.Pressed(pixelgl.KeyLeft) {
 		camPos.X -= camSpeed * g.dt
 	}
@@ -135,14 +203,6 @@ func (g *Game) DrawRdy(win *pixelgl.Window) {
 	if win.Pressed(pixelgl.KeyDown) {
 		camPos.Y -= camSpeed * g.dt
 	}
-
-	camZoom *= math.Pow(camZoomSpeed, win.MouseScroll().Y)
-
-	for i, tree := range g.trees {
-		tree.Draw(win, g.matrices[i])
-	}
-
-	g.last = time.Now()
 }
 
 func loadPicture(path string) (pixel.Picture, error) {

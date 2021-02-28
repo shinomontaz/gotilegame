@@ -3,6 +3,7 @@ module gotilegame
 go 1.14
 
 require (
+	github.com/faiface/beep v1.0.2
 	github.com/faiface/gui v0.0.0-20190522095505-ed00d80d15da
 	github.com/faiface/mainthread v0.0.0-20171120011319-8b78f0a41ae3
 	github.com/faiface/pixel v0.10.0
