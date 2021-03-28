@@ -36,19 +36,25 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	buffers = append(buffers, beep.NewBuffer(format))
-	buffers[1].Append(streamer2)
-	streamer2.Close()
+	//	buffers = append(buffers, beep.NewBuffer(format))
+	//	buffers[1].Append(streamer2)
+	defer streamer2.Close()
+	//	sr := format.SampleRate * 2
+	//	resampledMusic := beep.Resample(4, format.SampleRate, sr, streamer2)
 
-	oddEven := 0
+	speaker.Play(streamer2)
+
+	//	oddEven := 0
 	for {
 		fmt.Println("Press [ENTER] to fire!")
 		fmt.Scanln()
 
-		oddEven++
-		oddEven %= 2
+		//		oddEven++
+		//		oddEven %= 2
 
-		shot := buffers[oddEven].Streamer(0, buffers[oddEven].Len())
+		//		shot := buffers[oddEven].Streamer(0, buffers[oddEven].Len())
+		shot := buffers[0].Streamer(0, buffers[0].Len())
+
 		speaker.Play(shot)
 	}
 }

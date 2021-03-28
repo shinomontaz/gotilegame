@@ -41,12 +41,10 @@ type MusicInfo struct {
 	path string
 }
 
-func loadMusic() map[string]*beep.Buffer {
+func loadMusic() (map[string]*beep.Buffer, beep.SampleRate) {
+	var sampleRate beep.SampleRate
 	res := make(map[string]*beep.Buffer)
 	list := []MusicInfo{
-		MusicInfo{name: "monster", path: "music\\monster.mp3"},
-		MusicInfo{name: "fear", path: "music\\fear.mp3"},
-		MusicInfo{name: "anxiety", path: "music\\anxiety.mp3"},
 		MusicInfo{name: "laser", path: "music\\laser.mp3"},
 	}
 
@@ -65,6 +63,7 @@ func loadMusic() map[string]*beep.Buffer {
 		if !isInited {
 			speaker.Init(format.SampleRate, format.SampleRate.N(time.Second/10))
 			isInited = true
+			sampleRate = format.SampleRate
 		}
 
 		buffer := beep.NewBuffer(format)
@@ -75,5 +74,5 @@ func loadMusic() map[string]*beep.Buffer {
 		f.Close()
 	}
 
-	return res
+	return res, sampleRate
 }

@@ -22,6 +22,7 @@ import (
 type Controller interface {
 	Navigate(to string)
 	Quit()
+	Sound(name string)
 	Log(msg string)
 }
 
@@ -189,6 +190,7 @@ func (g *Game) controlsGame(win *pixelgl.Window, camPos *pixel.Vec, camSpeed flo
 		g.trees = append(g.trees, tree)
 		mouse := cam.Unproject(win.MousePosition())
 		g.matrices = append(g.matrices, pixel.IM.Scaled(pixel.ZV, 3).Moved(mouse))
+		g.c.Sound("laser")
 	}
 
 	if win.Pressed(pixelgl.KeyLeft) {
