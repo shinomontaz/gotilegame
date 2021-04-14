@@ -36,12 +36,16 @@ type Hero struct {
 	frame       int
 	frameLimit  int
 	spritesheet pixel.Picture
+	speed       int
+	pos         pixel.Vec
 }
 
 func NewHero() *Hero {
 	h := Hero{
 		state: STANDING,
 		dir:   TO_RIGHT,
+		speed: 5,
+		pos:   pixel.V(0.0, 0.0),
 	}
 
 	spritesheet, err := loadPicture("hero_spritesheet.png")
@@ -117,10 +121,12 @@ func (h *Hero) Notify(action int) {
 		h.state = WALKING
 		h.frameLimit = len(h.walkFrames)
 		h.dir = TO_LEFT
+		h.pos = h.pos.Add(pixel.V(-1.0, 0))
 	case RIGHT:
 		h.state = WALKING
 		h.frameLimit = len(h.walkFrames)
 		h.dir = TO_RIGHT
+		h.pos = h.pos.Add(pixel.V(1.0, 0))
 	case ENTER:
 		h.state = DYING
 		h.frameLimit = len(h.deathFrames)
@@ -131,4 +137,12 @@ func (h *Hero) Notify(action int) {
 	}
 
 	h.prevstate = h.state
+}
+
+func (h *Hero) setPos(pos pixel.Vec) {
+	h.pos = pos
+}
+
+func (h *Hero) getPos() pixel.Vec {
+	return h.pos
 }

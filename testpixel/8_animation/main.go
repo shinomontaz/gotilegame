@@ -25,8 +25,15 @@ func run() {
 	//	win.SetSmooth(true)
 
 	hero := NewHero()
+	//	hero.setPos(win.Bounds().Center())
+
+	world := NewWorld()
 
 	var (
+		// camPos       = pixel.ZV
+		// camSpeed     = 500.0
+		// camZoom      = 1.0
+		// camZoomSpeed = 1.2
 		frames    = 0
 		second    = time.Tick(time.Second)
 		frametime = time.Tick(120 * time.Millisecond)
@@ -36,6 +43,9 @@ func run() {
 
 	for !win.Closed() {
 		win.Clear(colornames.Whitesmoke)
+
+		//		cam := pixel.IM.Moved(hero.getPos())
+		//		win.SetMatrix(cam)
 
 		if win.Pressed(pixelgl.KeyLeft) {
 			hero.Notify(LEFT)
@@ -53,6 +63,7 @@ func run() {
 			hero.Notify(ENTER)
 		}
 
+		world.Draw(win)
 		hero.Draw(win, win.Bounds().Center())
 		win.Update()
 
