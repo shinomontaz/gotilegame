@@ -53,7 +53,7 @@ func run() {
 			hero.Notify(ENTER)
 		}
 
-		hero.Draw(win, pixel.IM.ScaledXY(pixel.ZV, pixel.V(hero.dir, 1)).Scaled(pixel.ZV, 1.5).Moved(win.Bounds().Center()))
+		hero.Draw(win, win.Bounds().Center())
 		win.Update()
 
 		frames++

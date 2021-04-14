@@ -52,20 +52,25 @@ func NewHero() *Hero {
 	h.spritesheet = spritesheet
 
 	xstep := 80.0
+	xdeathstep := 98.0
 	ystep := 94.0
 	for x := spritesheet.Bounds().Min.X; x < spritesheet.Bounds().Min.X+6*xstep; x += xstep {
 		h.walkFrames = append(h.walkFrames, pixel.R(x, spritesheet.Bounds().Max.Y-ystep, x+xstep, spritesheet.Bounds().Max.Y-2*ystep))
 	}
 	h.shootFrame = pixel.R(spritesheet.Bounds().Min.X, spritesheet.Bounds().Max.Y-2*ystep, spritesheet.Bounds().Min.X+xstep, spritesheet.Bounds().Max.Y-3*ystep)
 	h.standFrame = pixel.R(spritesheet.Bounds().Min.X, spritesheet.Bounds().Max.Y, spritesheet.Bounds().Min.X+xstep, spritesheet.Bounds().Max.Y-ystep)
-	for x := spritesheet.Bounds().Min.X + 3*xstep; x < spritesheet.Bounds().Min.X+6*xstep; x += xstep {
+	for x := spritesheet.Bounds().Min.X + 3*xstep; x < spritesheet.Bounds().Min.X+5*xstep; x += xstep {
 		h.deathFrames = append(h.deathFrames, pixel.R(x, spritesheet.Bounds().Max.Y-3*ystep, x+xstep, spritesheet.Bounds().Max.Y-4*ystep))
 	}
-	h.deadFrame = pixel.R(spritesheet.Bounds().Min.X+6*xstep, spritesheet.Bounds().Max.Y-3*ystep, spritesheet.Bounds().Min.X+6*xstep+ystep, spritesheet.Bounds().Max.Y-4*ystep)
+	for x := spritesheet.Bounds().Min.X + 5*xstep; x < spritesheet.Bounds().Min.X+5*xstep+xdeathstep; x += xdeathstep {
+		h.deathFrames = append(h.deathFrames, pixel.R(x, spritesheet.Bounds().Max.Y-3*ystep, x+xdeathstep, spritesheet.Bounds().Max.Y-4*ystep))
+	}
+
+	h.deadFrame = pixel.R(spritesheet.Bounds().Min.X+5*xstep+xdeathstep, spritesheet.Bounds().Max.Y-3*ystep, spritesheet.Bounds().Min.X+5*xstep+2*xdeathstep, spritesheet.Bounds().Max.Y-4*ystep)
 	return &h
 }
 
-func (h *Hero) Draw(t pixel.Target, matrix pixel.Matrix) {
+func (h *Hero) Draw(t pixel.Target, pos pixel.Vec) {
 	// get frame
 	var rect pixel.Rect
 	switch h.state {
@@ -82,7 +87,7 @@ func (h *Hero) Draw(t pixel.Target, matrix pixel.Matrix) {
 	}
 
 	soldier := pixel.NewSprite(h.spritesheet, rect)
-	soldier.Draw(t, matrix)
+	soldier.Draw(t, pixel.IM.ScaledXY(pixel.ZV, pixel.V(h.dir, 1)).Scaled(pixel.ZV, 1.5).Moved(pos))
 }
 
 func (h *Hero) Tick() {
