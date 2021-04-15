@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"math/rand"
 	"time"
 
@@ -30,7 +31,7 @@ func run() {
 	world := NewWorld()
 
 	var (
-		// camPos       = pixel.ZV
+		camPos = pixel.ZV
 		// camSpeed     = 500.0
 		// camZoom      = 1.0
 		// camZoomSpeed = 1.2
@@ -40,31 +41,33 @@ func run() {
 	)
 
 	rand.Seed(time.Now().UTC().UnixNano())
+	last := time.Now()
 
 	for !win.Closed() {
+
+		dt := time.Since(last).Seconds()
+		last = time.Now()
 		win.Clear(colornames.Whitesmoke)
 
-		//		cam := pixel.IM.Moved(hero.getPos())
-		//		win.SetMatrix(cam)
+		camPos = pixel.Lerp(camPos, hero.getPos(), 1-math.Pow(1.0/128, dt))
+		cam := pixel.IM.Moved(camPos)
 
-		if win.Pressed(pixelgl.KeyLeft) {
-			hero.Notify(LEFT)
-		}
-		if win.Pressed(pixelgl.KeyRight) {
-			hero.Notify(RIGHT)
-		}
-		if win.Pressed(pixelgl.KeyLeftControl) {
-			hero.Notify(FIRE)
-		}
+		win.SetMatrix(cam)
+
 		if win.Pressed(pixelgl.KeyRightControl) {
 			hero.Notify(FIRE)
-		}
-		if win.Pressed(pixelgl.KeyEnter) {
+		} else if win.Pressed(pixelgl.KeyLeft) {
+			hero.Notify(LEFT)
+		} else if win.Pressed(pixelgl.KeyRight) {
+			hero.Notify(RIGHT)
+		} else if win.Pressed(pixelgl.KeyLeftControl) {
+			hero.Notify(FIRE)
+		} else if win.Pressed(pixelgl.KeyEnter) {
 			hero.Notify(ENTER)
 		}
 
 		world.Draw(win)
-		hero.Draw(win, win.Bounds().Center())
+		hero.Draw(win, win.Bounds().Center().Sub(hero.getPos()))
 		win.Update()
 
 		frames++
@@ -74,6 +77,7 @@ func run() {
 		case <-second:
 			win.SetTitle(fmt.Sprintf("%s | FPS: %d", cfg.Title, frames))
 			frames = 0
+			fmt.Println(cam, hero.getPos())
 		default:
 		}
 	}

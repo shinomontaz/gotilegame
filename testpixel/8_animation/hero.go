@@ -121,12 +121,12 @@ func (h *Hero) Notify(action int) {
 		h.state = WALKING
 		h.frameLimit = len(h.walkFrames)
 		h.dir = TO_LEFT
-		h.pos = h.pos.Add(pixel.V(-1.0, 0))
+		h.pos = h.pos.Add(pixel.V(1.0, 0))
 	case RIGHT:
 		h.state = WALKING
 		h.frameLimit = len(h.walkFrames)
 		h.dir = TO_RIGHT
-		h.pos = h.pos.Add(pixel.V(1.0, 0))
+		h.pos = h.pos.Add(pixel.V(-1.0, 0))
 	case ENTER:
 		h.state = DYING
 		h.frameLimit = len(h.deathFrames)
