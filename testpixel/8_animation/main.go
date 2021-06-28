@@ -11,10 +11,13 @@ import (
 	"golang.org/x/image/colornames"
 )
 
+const WIDTH = 500.0
+const HEIGTH = 500.0
+
 func run() {
 	cfg := pixelgl.WindowConfig{
 		Title:  "Animation",
-		Bounds: pixel.R(0, 0, 500, 500),
+		Bounds: pixel.R(0, 0, WIDTH, HEIGTH),
 		VSync:  true,
 	}
 
@@ -28,7 +31,7 @@ func run() {
 	hero := NewHero()
 	//	hero.setPos(win.Bounds().Center())
 
-	world := NewWorld()
+	world := NewWorld(WIDTH, HEIGTH, hero.getPos())
 
 	var (
 		camPos = pixel.ZV
@@ -66,7 +69,7 @@ func run() {
 			hero.Notify(ENTER)
 		}
 
-		world.Draw(win)
+		world.Draw(win, hero.getPos())
 		hero.Draw(win, win.Bounds().Center().Sub(hero.getPos()))
 		win.Update()
 
@@ -76,8 +79,9 @@ func run() {
 			hero.Tick()
 		case <-second:
 			win.SetTitle(fmt.Sprintf("%s | FPS: %d", cfg.Title, frames))
+			fmt.Println("hero.getPos()", hero.getPos())
+
 			frames = 0
-			fmt.Println(cam, hero.getPos())
 		default:
 		}
 	}
