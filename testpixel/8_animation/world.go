@@ -43,9 +43,14 @@ func (w World) Draw(t pixel.Target, pos pixel.Vec) {
 	var part1, part2 *pixel.Sprite
 
 	part1 = pixel.NewSprite(w.bg, w.viewport)
-	part2 = pixel.NewSprite(w.bg, w.viewport)
+	part2 = pixel.NewSprite(w.bg, pixel.R(width, 0, 2*width, height))
 
-	w.viewport = w.viewport.Moved(pos)
+	//	fmt.Println("x1", x1)
+
+	vector1 := pixel.V(width/2, height/2)
+	vector2 := pixel.V(3*width/2, height/2)
+
+	//	w.viewport = w.viewport.Moved(pos)
 	part1.Draw(t, pixel.IM.Moved(pixel.V(x1, w.height/2)))
 	if x1 > 0 {
 		part2.Draw(t, pixel.IM.Moved(pixel.V(x1+w.width, w.height/2)))
