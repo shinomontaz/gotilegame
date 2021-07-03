@@ -1,18 +1,23 @@
 package main
 
 import (
+	"fmt"
 	"math"
 
 	"github.com/faiface/pixel"
 )
 
 type World struct {
-	width  float64
-	height float64
-	//	bg     *pixel.Sprite
+	width    float64
+	height   float64
 	bg       pixel.Picture
 	viewport pixel.Rect
-	start    pixel.Vec
+	vector1  pixel.Vec
+	vector2  pixel.Vec
+	part1    *pixel.Sprite
+	part2    *pixel.Sprite
+	pos      pixel.Vec
+	steps    int
 }
 
 func NewWorld(width, height float64, start pixel.Vec) *World {
@@ -20,41 +25,39 @@ func NewWorld(width, height float64, start pixel.Vec) *World {
 		width:    width,
 		height:   height,
 		viewport: pixel.R(0, 0, width, height),
-		start:    start,
+		vector1:  pixel.V(width/2, height/2),
+		vector2:  pixel.V(3*width/2, height/2),
+		pos:      start,
+		steps:    0,
 	}
-	bg, err := loadPicture("back.png")
+
+	bg, err := loadPicture("layer1.png")
 	if err != nil {
 		panic(err)
 	}
 
-	w.bg = bg //pixel.NewSprite(bg, pixel.R(bg.Bounds().Min.X, bg.Bounds().Min.Y, bg.Bounds().Max.X, bg.Bounds().Max.Y))
+	w.bg = bg
+
+	w.part1 = pixel.NewSprite(w.bg, w.viewport)
+	w.part2 = pixel.NewSprite(w.bg, pixel.R(width, 0, 2*width, height))
 
 	return &w
 }
 
-func (w World) Draw(t pixel.Target, pos pixel.Vec) {
-	//	r := w.bg.Frame()
+func (w *World) Draw(t pixel.Target, pos pixel.Vec, cam pixel.Vec) {
+	x, _ := pos.XY()
+	steps := int(math.Abs(x / w.width))
 
-	xProj := pos.Project(pixel.V(1.0, 0))
-	x, _ := xProj.XY()
-	//	jumps := int(x / (w.width / 2))
-	x1 := math.Mod(x, w.width/2)
-
-	var part1, part2 *pixel.Sprite
-
-	part1 = pixel.NewSprite(w.bg, w.viewport)
-	part2 = pixel.NewSprite(w.bg, pixel.R(width, 0, 2*width, height))
-
-	//	fmt.Println("x1", x1)
-
-	vector1 := pixel.V(width/2, height/2)
-	vector2 := pixel.V(3*width/2, height/2)
-
-	//	w.viewport = w.viewport.Moved(pos)
-	part1.Draw(t, pixel.IM.Moved(pixel.V(x1, w.height/2)))
-	if x1 > 0 {
-		part2.Draw(t, pixel.IM.Moved(pixel.V(x1+w.width, w.height/2)))
-	} else {
-		part2.Draw(t, pixel.IM.Moved(pixel.V(x1-w.width, w.height/2)))
+	if steps != w.steps {
+		fmt.Println("w.steps, steps", w.steps, steps)
+		w.vector1, w.vector2 = w.vector2, w.vector1
+		w.steps = steps
 	}
+
+	x = math.Mod(x, w.width)
+
+	w.pos = pixel.V(-x, 0)
+
+	w.part1.Draw(t, pixel.IM.Moved(w.vector1.Sub(w.pos).Sub(cam)))
+	w.part2.Draw(t, pixel.IM.Moved(w.vector2.Sub(w.pos).Sub(cam)))
 }

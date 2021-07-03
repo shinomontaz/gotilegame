@@ -26,11 +26,9 @@ func run() {
 		panic(err)
 	}
 
-	//	win.SetSmooth(true)
+	win.SetSmooth(true)
 
 	hero := NewHero()
-	//	hero.setPos(win.Bounds().Center())
-
 	world := NewWorld(WIDTH, HEIGTH, hero.getPos())
 
 	var (
@@ -69,8 +67,9 @@ func run() {
 			hero.Notify(ENTER)
 		}
 
-		world.Draw(win, hero.getPos())
+		world.Draw(win, hero.getPos(), camPos)
 		hero.Draw(win, win.Bounds().Center().Sub(hero.getPos()))
+
 		win.Update()
 
 		frames++
