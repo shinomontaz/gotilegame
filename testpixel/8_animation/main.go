@@ -2,16 +2,16 @@ package main
 
 import (
 	"fmt"
+	"image/color"
 	"math"
 	"math/rand"
 	"time"
 
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/pixelgl"
-	"golang.org/x/image/colornames"
 )
 
-const WIDTH = 500.0
+const WIDTH = 640.0
 const HEIGTH = 500.0
 
 func run() {
@@ -44,11 +44,13 @@ func run() {
 	rand.Seed(time.Now().UTC().UnixNano())
 	last := time.Now()
 
+	rgba := color.RGBA{205, 231, 244, 1}
+
 	for !win.Closed() {
 
 		dt := time.Since(last).Seconds()
 		last = time.Now()
-		win.Clear(colornames.Whitesmoke)
+		win.Clear(rgba)
 
 		camPos = pixel.Lerp(camPos, hero.getPos(), 1-math.Pow(1.0/128, dt))
 		cam := pixel.IM.Moved(camPos)
@@ -68,7 +70,8 @@ func run() {
 		}
 
 		world.Draw(win, hero.getPos(), camPos)
-		hero.Draw(win, win.Bounds().Center().Sub(hero.getPos()))
+		//		hero.Draw(win, win.Bounds().Center().Sub(hero.getPos()))
+		hero.Draw(win, win.Bounds().Center().Sub(hero.getPos()).Sub(pixel.V(0, 140.0)))
 
 		win.Update()
 

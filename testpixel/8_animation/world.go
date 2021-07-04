@@ -25,13 +25,12 @@ func NewWorld(width, height float64, start pixel.Vec) *World {
 		width:    width,
 		height:   height,
 		viewport: pixel.R(0, 0, width, height),
-		vector1:  pixel.V(width/2, height/2),
-		vector2:  pixel.V(3*width/2, height/2),
+		vector1:  pixel.V(width/2, height/2+140.0),
+		vector2:  pixel.V(3*width/2, height/2+140.0),
 		pos:      start,
 		steps:    0,
 	}
-
-	bg, err := loadPicture("layer1.png")
+	bg, err := loadPicture("assets/DarkVaniaAssets/background/cloudySky_640x360px.png")
 	if err != nil {
 		panic(err)
 	}
@@ -39,7 +38,8 @@ func NewWorld(width, height float64, start pixel.Vec) *World {
 	w.bg = bg
 
 	w.part1 = pixel.NewSprite(w.bg, w.viewport)
-	w.part2 = pixel.NewSprite(w.bg, pixel.R(width, 0, 2*width, height))
+	//	w.part2 = pixel.NewSprite(w.bg, pixel.R(width, 0, 2*width, height))
+	w.part2 = pixel.NewSprite(w.bg, w.viewport)
 
 	return &w
 }
