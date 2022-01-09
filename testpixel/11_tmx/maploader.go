@@ -189,7 +189,7 @@ func (w *Worldmap) Geometry() []pixel.Rect {
 				Max: max,
 			}
 
-			platforms = append(platforms, rc)
+			geom = append(geom, rc)
 
 		}
 	}
