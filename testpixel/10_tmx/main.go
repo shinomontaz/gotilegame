@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"image/png"
 	"math"
 	"os"
@@ -30,12 +31,26 @@ func gameloop(win *pixelgl.Window, tilemap *tmx.Map) {
 	// Load the sprites
 	sprites := make(map[string]*pixel.Sprite)
 	for _, tileset := range tilemap.Tilesets {
-		if _, alreadyLoaded := sprites[tileset.Image.Source]; !alreadyLoaded {
-			sprite, pictureData := loadSprite(tileset.Image.Source)
-			sprites[tileset.Image.Source] = sprite
-			batches = append(batches, pixel.NewBatch(&pixel.TrianglesData{}, pictureData))
-			batchIndices[tileset.Image.Source] = batchCounter
-			batchCounter++
+
+		if len(tileset.Tiles) > 0 {
+			for _, tile := range tileset.Tiles {
+				if _, alreadyLoaded := sprites[tile.Image.Source]; !alreadyLoaded {
+					sprite, pictureData := loadSprite(tile.Image.Source)
+					sprites[tile.Image.Source] = sprite
+					batches = append(batches, pixel.NewBatch(&pixel.TrianglesData{}, pictureData))
+					batchIndices[tile.Image.Source] = batchCounter
+					batchCounter++
+				}
+			}
+		} else {
+			if _, alreadyLoaded := sprites[tileset.Image.Source]; !alreadyLoaded {
+				fmt.Println("tileset.Image", tileset, tileset.Image)
+				sprite, pictureData := loadSprite(tileset.Image.Source)
+				sprites[tileset.Image.Source] = sprite
+				batches = append(batches, pixel.NewBatch(&pixel.TrianglesData{}, pictureData))
+				batchIndices[tileset.Image.Source] = batchCounter
+				batchCounter++
+			}
 		}
 	}
 
@@ -107,6 +122,7 @@ func gameloop(win *pixelgl.Window, tilemap *tmx.Map) {
 				}
 
 				// Calculate the framing for the tile within its tileset's source image
+
 				numRows := ts.Tilecount / ts.Columns
 				x, y := tileIDToCoord(tID, ts.Columns, numRows)
 				gamePos := indexToGamePos(tileIndex, tilemap.Width, tilemap.Height)
@@ -159,7 +175,7 @@ func run() {
 	panicIfErr(err)
 
 	// Initialize art assets (i.e. the tilemap)
-	tilemap, err := tmx.ReadFile("map.tmx")
+	tilemap, err := tmx.ReadFile("my2.tmx")
 	panicIfErr(err)
 
 	initPlatforms(tilemap)
@@ -168,6 +184,7 @@ func run() {
 }
 
 func loadSprite(path string) (*pixel.Sprite, *pixel.PictureData) {
+	fmt.Println("loading sprite:", path)
 	f, err := os.Open(path)
 	panicIfErr(err)
 
@@ -189,13 +206,8 @@ func panicIfErr(err error) {
 }
 
 func initPlatforms(tilemap *tmx.Map) {
-
 	platforms = make([]pixel.Rect, 0)
 	levelheigth := tilemap.TileHeight * tilemap.Height
-	//	levelwidth := tilemap.TileWidth * tilemap.Width
-
-	//	fmt.Println(tilemap.ObjectGroups)
-
 	for _, og := range tilemap.ObjectGroups {
 		for _, object := range og.Objects {
 
