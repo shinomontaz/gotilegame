@@ -64,19 +64,23 @@ void main() {
 `
 
 var uTime, uSpeed float32
+var b pixel.Rect
+var canvas, canvas1 *pixelgl.Canvas
 
 func gameloop(win *pixelgl.Window) {
-	win.Canvas().SetUniform("uTime", &uTime)
-	win.Canvas().SetUniform("uSpeed", &uSpeed)
+	canvas1 = pixelgl.NewCanvas(b)
+	canvas = pixelgl.NewCanvas(b)
+	canvas.SetUniform("uTime", &uTime)
+	canvas.SetUniform("uSpeed", &uSpeed)
 	uSpeed = 5.0
 
-	win.Canvas().SetFragmentShader(fsWater)
+	canvas.SetFragmentShader(fsWater)
 
 	start := time.Now()
 	for !win.Closed() {
 		win.Clear(pixel.RGB(0, 0, 0))
-		gopherimg.Draw(win, pixel.IM.Scaled(pixel.ZV, 2).Moved(win.Bounds().Center()))
 
+		mainStep(win)
 		uTime = float32(time.Since(start).Seconds())
 		if win.Pressed(pixelgl.KeyRight) {
 			uSpeed += 0.1
@@ -89,10 +93,22 @@ func gameloop(win *pixelgl.Window) {
 	}
 }
 
+func mainStep(t pixel.Target) {
+	canvas1.Clear(pixel.RGB(0, 0, 0))
+	canvas.Clear(pixel.RGB(0, 0, 0))
+
+	gopherimg.Draw(canvas1, pixel.IM.Moved(pixel.Vec{100, 100}))
+	gopherimg.Draw(canvas1, pixel.IM.Scaled(pixel.ZV, 2).Moved(canvas1.Bounds().Center())) // pixel.IM.Scaled(pixel.ZV, 2).Moved(canvas.Bounds().Center())
+	canvas1.Draw(canvas, pixel.IM.Moved(canvas.Bounds().Center()))
+
+	canvas.Draw(t, pixel.IM.Moved(canvas.Bounds().Center()))
+}
+
 func run() {
+	b = pixel.R(0, 0, 325, 348)
 	cfg := pixelgl.WindowConfig{
 		Title:  "Hello, shaders!",
-		Bounds: pixel.R(0, 0, 325, 348),
+		Bounds: b,
 		VSync:  true,
 	}
 	win, err := pixelgl.NewWindow(cfg)
