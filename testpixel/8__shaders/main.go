@@ -1,80 +1,39 @@
 package main
 
 import (
+	"fmt"
 	"image/png"
+	"io/ioutil"
 	"os"
 	"time"
 
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/pixelgl"
+	"github.com/go-gl/mathgl/mgl32"
 )
 
 var gopherimg *pixel.Sprite
 
-var fsGrayscale = `
-#version 330 core
-
-in vec2  vTexCoords;
-
-out vec4 fragColor;
-
-uniform vec4 uTexBounds;
-uniform sampler2D uTexture;
-
-void main() {
-	// Get our current screen coordinate
-	vec2 t = (vTexCoords - uTexBounds.xy) / uTexBounds.zw;
-
-	// Sum our 3 color channels
-	float sum  = texture(uTexture, t).r;
-	      sum += texture(uTexture, t).g;
-	      sum += texture(uTexture, t).b;
-
-	// Divide by 3, and set the output to the result
-	vec4 color = vec4( sum/3, sum/3, sum/3, 1.0);
-	fragColor = color;
-}
-`
-
-var fsWater = `
-#version 330 core
-
-in vec2 vTexCoords;
-out vec4 fragColor;
-
-uniform sampler2D uTexture;
-uniform vec4 uTexBounds;
-
-// custom uniforms
-uniform float uSpeed;
-uniform float uTime;
-
-void main() {
-    vec2 t = vTexCoords / uTexBounds.zw;
-	vec3 influence = texture(uTexture, t).rgb;
-
-    if (influence.r + influence.g + influence.b > 0.3) {
-		t.y += cos(t.x * 40.0 + (uTime * uSpeed))*0.005;
-		t.x += cos(t.y * 40.0 + (uTime * uSpeed))*0.01;
-	}
-
-    vec3 col = texture(uTexture, t).rgb;
-	fragColor = vec4(col * vec3(0.6, 0.6, 1.2),1.0);
-}
-`
-
-var uTime, uSpeed float32
+var fragSource string
+var uTime float32
+var uObject mgl32.Mat2
+var uLight mgl32.Vec2
 var b pixel.Rect
-var canvas, canvas1 *pixelgl.Canvas
+var canvas *pixelgl.Canvas
 
 func gameloop(win *pixelgl.Window) {
-	canvas1 = pixelgl.NewCanvas(b)
 	canvas = pixelgl.NewCanvas(b)
 	canvas.SetUniform("uTime", &uTime)
-	canvas.SetUniform("uSpeed", &uSpeed)
-	uSpeed = 5.0
+	canvas.SetUniform("uLight", &uLight)
+	canvas.SetUniform("uObject", &uObject)
 
-	canvas.SetFragmentShader(fsWater)
+	rect := pixel.R(100, 100, 200, 120)
+	uObject = [4]float32{float32(rect.Min.X), float32(rect.Min.Y), float32(rect.Max.X), float32(rect.Max.Y)}
+	uLight = [2]float32{0, 0}
+
+	fmt.Println(uObject)
+
+	canvas.SetFragmentShader(fragSource)
 
 	start := time.Now()
 	for !win.Closed() {
@@ -82,24 +41,14 @@ func gameloop(win *pixelgl.Window) {
 
 		mainStep(win)
 		uTime = float32(time.Since(start).Seconds())
-		if win.Pressed(pixelgl.KeyRight) {
-			uSpeed += 0.1
-		}
-		if win.Pressed(pixelgl.KeyLeft) {
-			uSpeed -= 0.1
-		}
-
 		win.Update()
 	}
 }
 
 func mainStep(t pixel.Target) {
-	canvas1.Clear(pixel.RGB(0, 0, 0))
 	canvas.Clear(pixel.RGB(0, 0, 0))
 
-	gopherimg.Draw(canvas1, pixel.IM.Moved(pixel.Vec{100, 100}))
-	gopherimg.Draw(canvas1, pixel.IM.Scaled(pixel.ZV, 2).Moved(canvas1.Bounds().Center())) // pixel.IM.Scaled(pixel.ZV, 2).Moved(canvas.Bounds().Center())
-	canvas1.Draw(canvas, pixel.IM.Moved(canvas.Bounds().Center()))
+	gopherimg.Draw(canvas, pixel.IM.Moved(b.Center()))
 
 	canvas.Draw(t, pixel.IM.Moved(canvas.Bounds().Center()))
 }
@@ -115,7 +64,7 @@ func run() {
 	if err != nil {
 		panic(err)
 	}
-	f, err := os.Open("./test_sprite.png")
+	f, err := os.Open("./gamebackground.png")
 	if err != nil {
 		panic(err)
 	}
@@ -125,9 +74,23 @@ func run() {
 	}
 	pd := pixel.PictureDataFromImage(img)
 	gopherimg = pixel.NewSprite(pd, pd.Bounds())
+
+	fragSource, err = LoadFileToString("light.glsl")
+	if err != nil {
+		panic(err)
+	}
+
 	gameloop(win)
 }
 
 func main() {
 	pixelgl.Run(run)
+}
+
+func LoadFileToString(filename string) (string, error) {
+	b, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return "", err
+	}
+	return string(b), nil
 }
