@@ -1,4 +1,9 @@
 #version 330 core
+// fragCoord -> vTexCoords
+// iResolution.xy -> uTexBounds.zw
+// mainImage(out vec4 fragColor, in vec2 fragCoord) -> main() + definition of 
+// in vec2 vTexCoords;
+// out vec4 fragColor;
 
 const float objectSize=0.04;
 const float lampSize = 0.02;
@@ -67,23 +72,11 @@ float isShadow(vec2 uv, vec2 posLamp, float bias) {
     return dist;
 }
 
-// Pixel default uniforms
-uniform vec4      uTexBounds;
-uniform sampler2D uTexture;
-
-// Our custom uniforms
-uniform float uTime;
-
-in vec2 vTexCoords;
-out vec4 fragColor;
-
-void main()
+void mainImage( out vec4 fragColor, in vec2 fragCoord )
 {
-    vec2 uv = vTexCoords / uTexBounds.y;
-
-    float bias = uTexBounds.x / uTexBounds.y;
-    vec2 posLamp = vec2((0.5 * sin(0.0) + 0.5) * bias , 0.5);
-//    vec2 posLamp = vec2((0.5 * sin(uTime*0.2) + 0.5) * bias , 0.5);
+    vec2 uv = fragCoord.xy / iResolution.y;
+    float bias = iResolution.x / iResolution.y;
+    vec2 posLamp = vec2((0.5 * sin(iTime*0.2) + 0.5) * bias , 0.5);
     vec4 cShadow = vec4(0.0,0.0,0.0, 1.0);  
     vec4 cObject = vec4(0.0,1.0,0.0, 1.0);
     vec4 cFloor = vec4(0.0,0.0,1.0, 1.0);
@@ -116,6 +109,7 @@ void main()
         if (distLamp < lampSize - tlamp) {
         	fragColor = vec4(1.0,1.0,1.0,1.0);
         } else {
+            
             float step = smoothstep(1.0, 0.0, (distLamp-(lampSize-tlamp))/tlamp);
             vec4 m = mix(cFloor, cLamp, step);
             fragColor = m;

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"image/png"
 	"io/ioutil"
 	"os"
@@ -24,14 +23,14 @@ var canvas *pixelgl.Canvas
 func gameloop(win *pixelgl.Window) {
 	canvas = pixelgl.NewCanvas(b)
 	canvas.SetUniform("uTime", &uTime)
-	canvas.SetUniform("uLight", &uLight)
-	canvas.SetUniform("uObject", &uObject)
+	// canvas.SetUniform("uLight", &uLight)
+	// canvas.SetUniform("uObject", &uObject)
 
-	rect := pixel.R(100, 100, 200, 120)
+	rect := pixel.R(300, 110, 400, 120)
 	uObject = [4]float32{float32(rect.Min.X), float32(rect.Min.Y), float32(rect.Max.X), float32(rect.Max.Y)}
 	uLight = [2]float32{0, 0}
 
-	fmt.Println(uObject)
+	//	fmt.Println(uObject)
 
 	canvas.SetFragmentShader(fragSource)
 
@@ -54,7 +53,7 @@ func mainStep(t pixel.Target) {
 }
 
 func run() {
-	b = pixel.R(0, 0, 325, 348)
+	b = pixel.R(0, 0, 500, 500)
 	cfg := pixelgl.WindowConfig{
 		Title:  "Hello, shaders!",
 		Bounds: b,
@@ -75,7 +74,11 @@ func run() {
 	pd := pixel.PictureDataFromImage(img)
 	gopherimg = pixel.NewSprite(pd, pd.Bounds())
 
-	fragSource, err = LoadFileToString("light.glsl")
+	//	fragSource, err = LoadFileToString("4lfyDM.glsl")
+	//	fragSource, err = LoadFileToString("light.glsl")
+
+	fragSource, err = LoadFileToString("slyGDR.glsl")
+
 	if err != nil {
 		panic(err)
 	}

@@ -18,7 +18,7 @@ uniform vec2 uLight;
 uniform mat2 uObject;
 
 // Utilities
-#define drawSDF(dist, col) color = mix(color, col, smoothstep(unit, 0.0, dist))
+#define drawSDF(dist, col) color = mix(color, col, smoothstep(1.0, 0.0, dist))
 
 struct ShadowVol2D {
     vec2 ap;
@@ -40,6 +40,10 @@ float sdBox(in vec2 p, in vec2 b) {
     return length(max(q, 0.0)) + min(0.0, max(q.x, q.y));
 }
 
+float sdDisc(in vec2 p, in float r) {
+    return length(p) - r;
+}
+
 float sdShadowVolume2D(in vec2 p, in vec2 ap, in vec2 ad, in vec2 bp, in vec2 bd) {
     vec2 pa = p - ap, pb = p - bp, ba = bp - ap;
 
@@ -59,32 +63,30 @@ float sdShadowVolume2D(in vec2 p, in vec2 ap, in vec2 ad, in vec2 bp, in vec2 bd
 // out vec4 fragColor;
 
 void main() {
-    vec2 t = vTexCoords / uTexBounds.zw;
-    vec3 col = texture(uTexture, t).rgb;
+    vec2 uv = vTexCoords / uTexBounds.zw;
+    vec3 col = texture(uTexture, uv).rgb;
+    vec2 center = 0.5 * uTexBounds.xy;
 
-    vec2 center = 0.5 * uTexBounds.zw;
-    vec2 uv = (vTexCoords) / uTexBounds.zw;
-//    float unit = 8.0 / uTexBounds.y;
-    float unit = 1.0;
+    vec4 pixelColor = texture(uTexture, uv.xy);
 
-    // Inverse square (kinda)
-    vec2 toLight = uv - uLight.xy;
-    vec3 color = vec3(1.0 / (1.0 + dot(toLight, toLight)));
+
+    // Inverse square (kinda)   
+    vec2 toLight = uv - uLight.xy / uTexBounds.zw;
+//    vec3 color = vec3(1.0 / (1.0 + dot(toLight, toLight)));
+    vec3 color = pixelColor.xyz * (1.0 / (1.0 + dot(toLight, toLight)));
+//    vec3 color = pixelColor.xyz;
 
     // Shapes and shadow volumes
 
-    vec2 bp = vec2(0.0, -1.0);
-    vec2 bb = vec2(0.5, 0.2);
+    vec2 bp = vec2(uObject[0][0], uObject[0][1]) / uTexBounds.zw;
+    vec2 bb = vec2(uObject[1][1], uObject[1][1]) / uTexBounds.zw;
 
-//    vec2 bp = vec2(uObject[0][0], uObject[0][1]);
-//    vec2 bb = vec2(uObject[1][1], uObject[1][1]);
-
-    ShadowVol2D boxShadow = shadowVolBox(uLight.xy - bp, bb); // Object space
+    ShadowVol2D boxShadow = shadowVolBox(uLight.xy/uTexBounds.zw - bp, bb); // Object space
     boxShadow.ap += bp, boxShadow.bp += bp; // Back to world space
     float boxShadowVol = sdShadowVolume2D(uv, boxShadow.ap, boxShadow.ad, boxShadow.bp, boxShadow.bd); // Shadow volume distance
     float box = sdBox(uv - bp, bb); // Box distance
 
-    if ( sdBox(uLight.xy - bp, bb) > 0.0 ) {
+   if ( sdBox(uLight.xy - bp, bb) > 0.0 ) {
         drawSDF(boxShadowVol, vec3(0.0)); // Draw shadow volumes
     }
     else { // Light is inside an object
@@ -92,5 +94,10 @@ void main() {
     }
 
     drawSDF(box, vec3(0.8, 0.0, 0.0));
-    fragColor = vec4(col *color, 1.0);
+
+    drawSDF(sdDisc(uv - uLight.xy, 0.05), vec3(1.0, 0.8, 0.0));
+
+//    fragColor = vec4(color, 1.0);
+
+    fragColor = pixelColor * color.x;
 }
