@@ -23,12 +23,12 @@ var canvas *pixelgl.Canvas
 func gameloop(win *pixelgl.Window) {
 	canvas = pixelgl.NewCanvas(b)
 	canvas.SetUniform("uTime", &uTime)
-	// canvas.SetUniform("uLight", &uLight)
-	// canvas.SetUniform("uObject", &uObject)
+	canvas.SetUniform("uLight", &uLight)
+	canvas.SetUniform("uObject", &uObject)
 
-	rect := pixel.R(300, 110, 400, 120)
+	rect := pixel.R(50, 50, 100, 80)
 	uObject = [4]float32{float32(rect.Min.X), float32(rect.Min.Y), float32(rect.Max.X), float32(rect.Max.Y)}
-	uLight = [2]float32{0, 0}
+	uLight = [2]float32{-50.0, 0}
 
 	//	fmt.Println(uObject)
 
@@ -77,7 +77,7 @@ func run() {
 	//	fragSource, err = LoadFileToString("4lfyDM.glsl")
 	//	fragSource, err = LoadFileToString("light.glsl")
 
-	fragSource, err = LoadFileToString("slyGDR.glsl")
+	fragSource, err = LoadFileToString("slyGDR_2.glsl")
 
 	if err != nil {
 		panic(err)
