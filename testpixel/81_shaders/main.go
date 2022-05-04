@@ -74,10 +74,7 @@ func run() {
 	pd := pixel.PictureDataFromImage(img)
 	gopherimg = pixel.NewSprite(pd, pd.Bounds())
 
-	//	fragSource, err = LoadFileToString("4lfyDM.glsl")
-	fragSource, err = LoadFileToString("light.glsl")
-
-	//	fragSource, err = LoadFileToString("slyGDR_2.glsl")
+	fragSource, err = LoadFileToString("test.glsl")
 
 	if err != nil {
 		panic(err)

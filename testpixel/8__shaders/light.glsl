@@ -44,16 +44,70 @@ float sdDisc(in vec2 p, in float r) {
     return length(p) - r;
 }
 
-float sdShadowVolume2D(in vec2 p, in vec2 ap, in vec2 ad, in vec2 bp, in vec2 bd) {
-    vec2 pa = p - ap, pb = p - bp, ba = bp - ap;
+float sdBox2(in vec2 uv, in vec2 tl, in vec2 br) {
+    vec2 d = max(tl-uv, uv-br);
+    return length(max(vec2(0.0), d)) + min(0.0, max(d.x, d.y));
+}
 
-    vec2 b = pa - ba * clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0);
-    vec2 e1 = pa - ad * max(0.0, dot(pa, ad) / dot(ad, ad));
-    vec2 e2 = pb - bd * max(0.0, dot(pb, bd) / dot(bd, bd));
+// a, b - points
+// ld - left down corner of a rectangle
+// ru - right up corner of a rectangle
+bool isShadowedByBox( vec2 a, vec2 b, vec2 ld, vec2 ru ) {
+    // get line equation
 
-    vec2 bap = vec2(-ba.y, ba.x), h = 0.5 * (ad + bd);
-    float s = sign(max(dot(pa, vec2(-ad.y, ad.x)) * dot(pb, vec2(-bd.y, bd.x)), dot(pa, bap) * sign(dot(bap, -h))));
-    return sqrt(min(dot(b, b), min(dot(e1, e1), dot(e2, e2)))) * s;
+    float A = b.y - a.y;
+    float B = - ( b.x - a.x );
+    float C = - a.x * ( b.y - a.y ) + a.y * ( b.x - a.x );
+
+    // check 4 signs to test if all vertexes lies in same halfplane defined by line
+    float lds = sign( A * ld.x + B * ld.y + C);
+    float rds = sign( A * ru.x + B * ld.y + C);
+    float rus = sign( A * ru.x + B * ru.y + C);
+    float lus = sign( A * ld.x + B * ru.y + C);
+
+    if (lds == rds && lds == rus && lds == lus ) {
+        return false;
+    }
+
+    // now check a or b inside a square
+    // we test if a or b lies in different halfplanes defined by each rectangle border; here we know line a,b intersects rect somewhere
+    float A1 = ru.y - ru.y;
+    float B1 = - ( ru.x - ld.x );
+    float C1 = - ld.x * ( ru.y - ru.y ) + ru.y * ( ru.x - ld.x );
+    float as = sign( A1 * a.x + B1 * a.y + C1);
+    float bs = sign( A1 * b.x + B1 * b.y + C1);
+    if ( as != bs ) {
+        return true;
+    }
+
+    float A2 = ld.y - ru.y;
+    float B2 = - ( ru.x - ru.x );
+    float C2 = - ru.x * ( ld.y - ru.y ) + ru.y * ( ru.x - ru.x );
+    as = sign( A2 * a.x + B2 * a.y + C2);
+    bs = sign( A2 * b.x + B2 * b.y + C2);
+    if ( as != bs ) {
+        return true;
+    }
+
+    float A3 = ld.y - ld.y;
+    float B3 = - ( ru.x - ld.x );
+    float C3 = - ld.x * ( ld.y - ld.y ) + ld.y * ( ru.x - ld.x );
+    as = sign( A3 * a.x + B3 * a.y + C3);
+    bs = sign( A3 * b.x + B3 * b.y + C3);
+    if ( as != bs ) {
+        return true;
+    }
+
+    float A4 = ld.y - ru.y;
+    float B4 = - ( ld.x - ld.x );
+    float C4 = - ld.x * ( ru.y - ld.y ) + ld.y * ( ld.x - ld.x );
+    as = sign( A4 * a.x + B4 * a.y + C4);
+    bs = sign( A4 * b.x + B4 * b.y + C4);
+    if ( as != bs ) {
+        return true;
+    }
+
+    return false;
 }
 
 // fragCoord -> vTexCoords
@@ -63,16 +117,16 @@ float sdShadowVolume2D(in vec2 p, in vec2 ap, in vec2 ad, in vec2 bp, in vec2 bd
 // out vec4 fragColor;
 
 void main() {
-    vec2 uv = vTexCoords / uTexBounds.zw;
-    vec3 col = texture(uTexture, uv).rgb;
+    vec2 uv = vTexCoords.xy;
+    vec2 uv2 = vTexCoords / uTexBounds.zw;
+    vec4 pixelColor = texture(uTexture, uv2);
 
-    vec4 pixelColor = texture(uTexture, uv.xy);
+    vec2 toLight = uv2 - uLight.xy / uTexBounds.zw;
+    vec3 color = vec3(1.0 / (1.0 + dot(toLight, toLight)));
+//    vec3 color = pixelColor.rgb * (1.0 / (1.0 + dot(toLight, toLight)));
+//    vec3 color = pixelColor.rgb;
 
-    // Inverse square (kinda)   
-    vec2 toLight = uv - uLight.xy / uTexBounds.zw;
-//    vec3 color = vec3(1.0 / (1.0 + dot(toLight, toLight)));
-    vec3 color = pixelColor.xyz * (1.0 / (1.0 + dot(toLight, toLight)));
-//    vec3 color = pixelColor.xyz;
+    float radius = 50;
 
     vec2 circle_pos = uLight + uTexBounds.zw/2;
 
@@ -81,23 +135,30 @@ void main() {
     vec2 bp = vec2(uObject[0][0], uObject[0][1]) + uTexBounds.zw/2;
     vec2 bb = vec2(uObject[1][1], uObject[1][1]) + uTexBounds.zw/2;
 
-    ShadowVol2D boxShadow = shadowVolBox(uLight.xy/uTexBounds.zw - bp, bb); // Object space
-    boxShadow.ap += bp, boxShadow.bp += bp; // Back to world space
-    float boxShadowVol = sdShadowVolume2D(uv, boxShadow.ap, boxShadow.ad, boxShadow.bp, boxShadow.bd); // Shadow volume distance
-    float box = sdBox(uv - bp, bb); // Box distance
+//    ShadowVol2D boxShadow = shadowVolBox(uLight.xy/uTexBounds.zw - bp, bb); // Object space
+//    boxShadow.ap += bp, boxShadow.bp += bp; // Back to world space
+//    float boxShadowVol = sdShadowVolume2D(uv, boxShadow.ap, boxShadow.ad, boxShadow.bp, boxShadow.bd); // Shadow volume distance
 
-//   if ( sdBox(uLight.xy - bp, bb) > 0.0 ) {
+    
+    float box = sdBox2(uv, bp, bb); // Box distance
+
+    float circle = sdDisc(uv - circle_pos, radius);
+
+if (isShadowedByBox( uLight, uv, bp, bb ) ) {
+       color = vec3(0.0);
+}
+//    if ( sdBox2(uv, uLight.xy - bp, bb) > 0.0 ) {
+//    if ( sdBox(uLight.xy - bp, bb) > 0.0 ) {
+//    if ( isShadowed( bp, bb, uv, uLight.xy) ) {
 //        drawSDF(boxShadowVol, vec3(0.0)); // Draw shadow volumes
+//       color = vec3(0.0);
 //    }
 //    else { // Light is inside an object
 //        color = vec3(0.0);
 //    }
 
     drawSDF(box, vec3(1.0, 0.0, 0.0));
-
-    drawSDF(sdDisc(uv - circle_pos.xy, 0.05), vec3(1.0, 0.8, 0.0));
+    drawSDF(circle, vec3(1.0, 0.8, 0.0));
 
     fragColor = vec4(color, 1.0);
-
-//    fragColor = pixelColor * color.x;
 }
