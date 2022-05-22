@@ -1,9 +1,6 @@
 package main
 
 import (
-	"image/png"
-	"io/ioutil"
-	"os"
 	"time"
 
 	"github.com/faiface/pixel"
@@ -11,13 +8,12 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 )
 
-var gopherimg *pixel.Sprite
+var back Background
 
 var fragSource string
 var uTime float32
 
-//var uObjects []float32 // = 250 rectangles
-var uObjects []mgl32.Vec4 // = 250 rectangles
+var uObjects []mgl32.Vec4
 
 var uNumObjects int32
 var uLight mgl32.Vec2
@@ -33,8 +29,6 @@ func gameloop(win *pixelgl.Window) {
 
 	rect := pixel.R(50, 50, 100, 80)
 	rect2 := pixel.R(-100, -80, -50, -20)
-	// uObjects = []float32{float32(rect.Min.X), float32(rect.Min.Y), float32(rect.Max.X), float32(rect.Max.Y)}
-	// uObjects = append(uObjects, float32(rect2.Min.X), float32(rect2.Min.Y), float32(rect2.Max.X), float32(rect2.Max.Y))
 
 	uObjects = []mgl32.Vec4{mgl32.Vec4{float32(rect.Min.X), float32(rect.Min.Y), float32(rect.Max.X), float32(rect.Max.Y)}}
 	uObjects = append(uObjects, mgl32.Vec4{float32(rect2.Min.X), float32(rect2.Min.Y), float32(rect2.Max.X), float32(rect2.Max.Y)})
@@ -57,15 +51,15 @@ func gameloop(win *pixelgl.Window) {
 func mainStep(t pixel.Target) {
 	canvas.Clear(pixel.RGB(0, 0, 0))
 
-	gopherimg.Draw(canvas, pixel.IM.Moved(b.Center()))
-
+	//pos pixel.Vec, cam pixel.Vec
+	back.Draw(canvas, pos, cam)
 	canvas.Draw(t, pixel.IM.Moved(canvas.Bounds().Center()))
 }
 
 func run() {
 	b = pixel.R(0, 0, 500, 500)
 	cfg := pixelgl.WindowConfig{
-		Title:  "Hello, shaders!",
+		Title:  "Canvas, shaders and friends",
 		Bounds: b,
 		VSync:  true,
 	}
@@ -73,21 +67,10 @@ func run() {
 	if err != nil {
 		panic(err)
 	}
-	f, err := os.Open("./gamebackground.png")
-	if err != nil {
-		panic(err)
-	}
-	img, err := png.Decode(f)
-	if err != nil {
-		panic(err)
-	}
-	pd := pixel.PictureDataFromImage(img)
-	gopherimg = pixel.NewSprite(pd, pd.Bounds())
 
-	//	fragSource, err = LoadFileToString("4lfyDM.glsl")
 	fragSource, err = LoadFileToString("light.glsl")
 
-	//	fragSource, err = LoadFileToString("slyGDR_2.glsl")
+	back = NewBack(lastPos, currBounds.Moved(pixel.Vec{0, 100}), "gamebackground.png")
 
 	if err != nil {
 		panic(err)
@@ -98,12 +81,4 @@ func run() {
 
 func main() {
 	pixelgl.Run(run)
-}
-
-func LoadFileToString(filename string) (string, error) {
-	b, err := ioutil.ReadFile(filename)
-	if err != nil {
-		return "", err
-	}
-	return string(b), nil
 }

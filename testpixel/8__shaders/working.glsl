@@ -15,10 +15,7 @@ uniform sampler2D uTexture;
 // Our custom uniforms
 uniform float uTime;
 uniform vec2 uLight;
-//uniform float uObjects[1000];
-uniform vec4 uObjects[1000];
-
-uniform int uNumObjects;
+uniform mat2 uObject;
 
 // Utilities
 #define drawSDF(dist, col) color = mix(color, col, smoothstep(1.0, 0.0, dist))
@@ -146,23 +143,18 @@ void main() {
     vec2 circle_pos = uLight + uTexBounds.zw/2;
 
     // Shapes and shadow volumes
-//    for (int i=0; i<uNumObjects; i+=4) { // for []float32 uniform
-    for (int i=0; i<uNumObjects; i++) {
-        
-//        vec2 bp = vec2(uObjects[i], uObjects[i+1]) + uTexBounds.zw/2;   // for []float32 uniform
-//        vec2 bb = vec2(uObjects[i+2], uObjects[i+3]) + uTexBounds.zw/2; //
+    vec2 bp = vec2(uObject[0][0], uObject[0][1]) + uTexBounds.zw/2;
+    vec2 bb = vec2(uObject[1][1], uObject[1][1]) + uTexBounds.zw/2;
 
-        vec2 bp = vec2(uObjects[i].x, uObjects[i].y) + uTexBounds.zw/2;     // []Vec4
-        vec2 bb = vec2(uObjects[i].z, uObjects[i].w) + uTexBounds.zw/2;
+    float box = sdBox2(uv, bp, bb); // Box distance
+    float circle = sdDisc(uv - circle_pos, radius);
 
-        float box = sdBox2(uv, bp, bb); // Box distance
-
-        if (isShadowedByBox( uLight, uv, bp, bb ) ) {
-            color -= 0.1;
-            break;
-        }
-        drawSDF(box, vec3(1.0, 0.0, 0.0));
+    if (isShadowedByBox( uLight, uv, bp, bb ) ) {
+        color -= 0.1;
     }
+
+    drawSDF(box, vec3(1.0, 0.0, 0.0));
+    drawSDF(circle, vec3(1.0, 0.8, 0.0));
 
     fragColor = vec4(color, 1.0);
 }
