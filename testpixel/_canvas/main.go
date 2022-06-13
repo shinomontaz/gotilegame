@@ -11,9 +11,9 @@ import (
 )
 
 func run() {
-	b := pixel.R(0, 0, 500, 350)
+	b := pixel.R(100, 100, 600, 450)
 	cfg := pixelgl.WindowConfig{
-		Title:  "Hello, World!",
+		Title:  "Hello, canvas!",
 		Bounds: b,
 		VSync:  true,
 	}
@@ -23,7 +23,7 @@ func run() {
 		panic(err)
 	}
 
-	pic, err := loadPicture("test_sprite.png")
+	pic, err := loadPicture("gamebackground.png")
 	if err != nil {
 		panic(err)
 	}
@@ -33,7 +33,7 @@ func run() {
 	canvas := pixelgl.NewCanvas(b)
 
 	canvas.Clear(colornames.Black)
-	sprite.Draw(canvas, pixel.IM.Moved(win.Bounds().Center()))
+	sprite.Draw(canvas, pixel.IM.Moved(canvas.Bounds().Center()))
 
 	win.Clear(colornames.Skyblue)
 	canvas.Draw(win, pixel.IM.Moved(win.Bounds().Center()))

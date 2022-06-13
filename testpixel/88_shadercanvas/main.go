@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/faiface/pixel"
@@ -8,10 +9,12 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 )
 
-var back Background
+var back *Back
 
 var fragSource string
 var uTime float32
+
+var lastPos pixel.Vec
 
 var uObjects []mgl32.Vec4
 
@@ -21,11 +24,13 @@ var b pixel.Rect
 var canvas *pixelgl.Canvas
 
 func gameloop(win *pixelgl.Window) {
-	canvas = pixelgl.NewCanvas(b)
+	//	canvas = pixelgl.NewCanvas(b)
+	canvas = pixelgl.NewCanvas(pixel.R(0, 0, b.W(), b.H()))
+
 	canvas.SetUniform("uTime", &uTime)
 	canvas.SetUniform("uLight", &uLight)
-	canvas.SetUniform("uObjects", &uObjects)
-	canvas.SetUniform("uNumObjects", &uNumObjects)
+	//	canvas.SetUniform("uObjects", &uObjects)
+	//	canvas.SetUniform("uNumObjects", &uNumObjects)
 
 	rect := pixel.R(50, 50, 100, 80)
 	rect2 := pixel.R(-100, -80, -50, -20)
@@ -48,16 +53,28 @@ func gameloop(win *pixelgl.Window) {
 	}
 }
 
-func mainStep(t pixel.Target) {
+func mainStep(t *pixelgl.Window) { //t pixel.Target) {
 	canvas.Clear(pixel.RGB(0, 0, 0))
 
-	//pos pixel.Vec, cam pixel.Vec
-	back.Draw(canvas, pos, cam)
-	canvas.Draw(t, pixel.IM.Moved(canvas.Bounds().Center()))
+	//	cam := pixel.ZV
+
+	cam := lastPos.Sub(lastPos).Sub(pixel.V(0, 150))
+
+	back.Draw(canvas, lastPos, cam)
+
+	cent := pixel.Vec{canvas.Bounds().W() / 2, canvas.Bounds().H() / 2}
+	fmt.Println("canvas.Bounds().Center()): %v", canvas.Bounds().Center())
+	fmt.Println("cent: %v", cent)
+
+	canvas.Draw(t, pixel.IM.Moved(t.Bounds().Center()))
+	//	canvas.Draw(t, pixel.IM.Moved(cent))
 }
 
 func run() {
-	b = pixel.R(0, 0, 500, 500)
+	b = pixel.R(100, 100, 500, 500)
+	//	b = pixel.R(500, 500, 1000, 1000)
+
+	lastPos = b.Center()
 	cfg := pixelgl.WindowConfig{
 		Title:  "Canvas, shaders and friends",
 		Bounds: b,
@@ -70,7 +87,7 @@ func run() {
 
 	fragSource, err = LoadFileToString("light.glsl")
 
-	back = NewBack(lastPos, currBounds.Moved(pixel.Vec{0, 100}), "gamebackground.png")
+	back = NewBack(lastPos, b, "gamebackground.png")
 
 	if err != nil {
 		panic(err)
