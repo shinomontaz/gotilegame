@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"time"
 
 	"github.com/faiface/pixel"
@@ -23,7 +24,11 @@ var uLight mgl32.Vec2
 var b pixel.Rect
 var canvas *pixelgl.Canvas
 
+var camPos pixel.Vec
+var cam pixel.Matrix
+
 func gameloop(win *pixelgl.Window) {
+	camPos = pixel.ZV
 	//	canvas = pixelgl.NewCanvas(b)
 	canvas = pixelgl.NewCanvas(pixel.R(0, 0, b.W(), b.H()))
 
@@ -46,9 +51,24 @@ func gameloop(win *pixelgl.Window) {
 	start := time.Now()
 	for !win.Closed() {
 		win.Clear(pixel.RGB(0, 0, 0))
+		dt := time.Since(start).Seconds()
+		uTime = float32(dt)
+
+		if win.Pressed(pixelgl.KeyLeft) {
+			lastPos.X -= 1.0 * dt
+		}
+		if win.Pressed(pixelgl.KeyRight) {
+			lastPos.X += 1.0 * dt
+		}
+
+		camPos = pixel.Lerp(camPos, lastPos.Sub(pixel.V(0, 150)), 1-math.Pow(1.0/128, dt))
+		//		cam := pixel.IM.Moved(win.Bounds().Center().Sub(camPos))
+
+		cam = pixel.IM.Moved(camPos)
 
 		mainStep(win)
-		uTime = float32(time.Since(start).Seconds())
+		win.SetMatrix(cam)
+
 		win.Update()
 	}
 }
@@ -58,9 +78,9 @@ func mainStep(t *pixelgl.Window) { //t pixel.Target) {
 
 	//	cam := pixel.ZV
 
-	cam := lastPos.Sub(lastPos).Sub(pixel.V(0, 150))
+	//	cam := lastPos.Sub(lastPos).Sub(pixel.V(0, 150))
 
-	back.Draw(canvas, lastPos, cam)
+	back.Draw(canvas, lastPos, camPos)
 
 	cent := pixel.Vec{canvas.Bounds().W() / 2, canvas.Bounds().H() / 2}
 	fmt.Println("canvas.Bounds().Center()): %v", canvas.Bounds().Center())
