@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"image/png"
 	"io/ioutil"
 	"os"
@@ -25,6 +26,8 @@ var b pixel.Rect
 var canvas *pixelgl.Canvas
 
 func gameloop(win *pixelgl.Window) {
+	uLight = [2]float32{-50.0, 0.0}
+
 	canvas = pixelgl.NewCanvas(b)
 	canvas.SetUniform("uTime", &uTime)
 	canvas.SetUniform("uLight", &uLight)
@@ -40,13 +43,18 @@ func gameloop(win *pixelgl.Window) {
 	uObjects = append(uObjects, mgl32.Vec4{float32(rect2.Min.X), float32(rect2.Min.Y), float32(rect2.Max.X), float32(rect2.Max.Y)})
 
 	uNumObjects = int32(len(uObjects))
-	uLight = [2]float32{-50.0, 0}
 
 	canvas.SetFragmentShader(fragSource)
 
 	start := time.Now()
 	for !win.Closed() {
 		win.Clear(pixel.RGB(0, 0, 0))
+
+		if win.JustPressed(pixelgl.MouseButtonLeft) {
+			fmt.Println(win.MousePosition())
+			pos := win.MousePosition()
+			uLight = [2]float32{float32(pos.X - b.Center().X), float32(pos.Y - b.Center().Y)}
+		}
 
 		mainStep(win)
 		uTime = float32(time.Since(start).Seconds())

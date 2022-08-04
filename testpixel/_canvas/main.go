@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"image"
 	_ "image/png"
 	"os"
@@ -31,17 +32,34 @@ func run() {
 	sprite := pixel.NewSprite(pic, pic.Bounds())
 
 	canvas := pixelgl.NewCanvas(b)
-
-	canvas.Clear(colornames.Black)
-	sprite.Draw(canvas, pixel.IM.Moved(canvas.Bounds().Center()))
-
-	win.Clear(colornames.Skyblue)
-	canvas.Draw(win, pixel.IM.Moved(win.Bounds().Center()))
-
-	//	sprite.Draw(win, pixel.IM.Moved(win.Bounds().Center()))
-
+	canvas2 := pixelgl.NewCanvas(b)
+	//	last := time.Now()
 	for !win.Closed() {
+		//		dt := time.Since(last).Seconds()
+
+		if win.Pressed(pixelgl.KeyLeft) {
+			b = b.Moved(pixel.Vec{-1, 0})
+		}
+		if win.Pressed(pixelgl.KeyRight) {
+			b = b.Moved(pixel.Vec{1, 0})
+		}
+
+		fmt.Println(b)
+
+		canvas.Clear(colornames.Black)
+		canvas2.Clear(colornames.Black)
+
+		canvas.SetBounds(b)
+		canvas2.SetBounds(b)
+
+		sprite.Draw(canvas, pixel.IM.Moved(canvas.Bounds().Center()))
+		canvas.Draw(canvas2, pixel.IM.Moved(canvas2.Bounds().Center()))
+
+		win.Clear(colornames.Skyblue)
+		canvas2.Draw(win, pixel.IM.Moved(win.Bounds().Center()))
+
 		win.Update()
+		//		last = time.Now()
 	}
 }
 
