@@ -6,7 +6,7 @@ import (
 
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/pixelgl"
-	"github.com/salviati/go-tmx/tmx"
+	tmx "github.com/lafriks/go-tiled"
 )
 
 type Worldmap struct {
@@ -20,7 +20,7 @@ type Worldmap struct {
 }
 
 func NewWorldmap(source string) *Worldmap {
-	tm, err := tmx.ReadFile(source)
+	tm, err := tmx.LoadFile(source)
 	if err != nil {
 		panic(err)
 	}
