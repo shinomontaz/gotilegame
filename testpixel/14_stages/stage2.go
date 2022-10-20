@@ -3,31 +3,36 @@ package main
 import (
 	"fmt"
 	"time"
+
+	"golang.org/x/image/colornames"
+
+	"github.com/faiface/pixel/pixelgl"
 )
 
 type Stage2 struct {
-	ID      int
-	done    chan struct{}
-	isReady bool
-	inform  Inform
-	j       Job
-	nextId  int
+	id       int
+	done     chan struct{}
+	isReady  bool
+	inform   Inform
+	j        Job
+	eventMap map[int]int
 }
 
-func NewStage2(id int, f Inform) *Stage2 {
+func NewStage2(f Inform) *Stage2 {
 	return &Stage2{
-		ID:     id,
-		done:   make(chan struct{}),
-		inform: f,
+		id:       STAGE_MENU,
+		done:     make(chan struct{}),
+		inform:   f,
+		eventMap: map[int]int{EVENT_ENTER: STAGE_GAME},
 	}
 }
 
 func (s *Stage2) GetID() int {
-	return s.ID
+	return s.id
 }
 
 func (s *Stage2) Init() {
-	time.Sleep(10000)
+	time.Sleep(2 * time.Second)
 	s.isReady = true
 }
 
@@ -49,7 +54,7 @@ func (s *Stage2) Start() {
 		}()
 
 	}
-	fmt.Println("stage started", s.ID)
+	fmt.Println("stage started", s.id)
 }
 
 func (s *Stage2) SetJob(j Job) {
@@ -60,7 +65,7 @@ func (s *Stage2) Notify(event int) {
 	s.inform(event)
 }
 
-func (s *Stage2) Run(dt float64) {
+func (s *Stage2) Run(win *pixelgl.Window, dt float64) {
 	if !s.isReady {
 		s.Notify(EVENT_NOTREADY)
 		return
@@ -69,14 +74,21 @@ func (s *Stage2) Run(dt float64) {
 	case <-s.done:
 		s.Notify(EVENT_DONE)
 	default:
-		//		fmt.Println(s.ID)
+		win.Clear(colornames.Aqua)
+		if win.Pressed(pixelgl.KeyEnter) {
+			s.Notify(EVENT_ENTER)
+		}
+		if win.Pressed(pixelgl.KeyEscape) {
+			s.Notify(EVENT_QUIT)
+		}
 	}
 }
 
 func (s *Stage2) SetNext(event, id int) {
-	s.nextId = id
+	s.eventMap[event] = id
 }
 
-func (s *Stage2) GetNext(event int) int {
-	return s.nextId
+func (s *Stage2) GetNext(event int) (int, bool) {
+	next, ok := s.eventMap[event]
+	return next, ok
 }

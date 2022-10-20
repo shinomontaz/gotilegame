@@ -5,16 +5,33 @@ package main
 import (
 	"fmt"
 	"time"
+
+	"github.com/faiface/pixel"
+	"github.com/faiface/pixel/pixelgl"
 )
 
 func inform(e int) {
 	switch e {
 	case EVENT_DONE:
 		fmt.Println("event done")
-		setStage(currStage.GetNext(EVENT_DONE))
+		next, ok := currStage.GetNext(EVENT_DONE)
+		if ok {
+			setStage(next)
+		}
 	case EVENT_ENTER:
 		fmt.Println("event enter")
-		setStage(currStage.GetNext(EVENT_ENTER))
+		next, ok := currStage.GetNext(EVENT_ENTER)
+		if ok {
+			setStage(next)
+		}
+	case EVENT_QUIT:
+		fmt.Println("event quit")
+		next, ok := currStage.GetNext(EVENT_QUIT)
+		if ok {
+			setStage(next)
+		} else {
+			isquit = true
+		}
 	case EVENT_NOTREADY:
 		fmt.Println("event not ready")
 		loadingStage.SetUp(WithJob(currStage.Init), WithNext(EVENT_DONE, currStage.GetID()))
@@ -33,23 +50,40 @@ var stages map[int]IStage
 var loadingStage IStage
 
 func main() {
+	pixelgl.Run(run)
+}
+
+func run() {
+	cfg := pixelgl.WindowConfig{
+		Title:  "Hello, World!",
+		Bounds: pixel.R(0, 0, 500, 350),
+		VSync:  true,
+	}
+
+	win, err := pixelgl.NewWindow(cfg)
+	if err != nil {
+		panic(err)
+	}
+
 	stages = make(map[int]IStage, 0)
-	loadingStage = NewStage2(1, inform)
-	stages[1] = loadingStage
-	stages[2] = NewStage2(2, inform)
+	loadingStage = NewStage1(inform)
+	stages[STAGE_LOADING] = loadingStage
+	stages[STAGE_MENU] = NewStage2(inform)
 	//	stages[2].SetUp(WithNext(EVENT_ENTER, 3))
-	stages[3] = NewStage3(3, inform)
+	stages[STAGE_GAME] = NewStage3(inform)
 
-	currStage = stages[1]
+	currStage = stages[STAGE_LOADING]
 
-	currStage.SetUp(WithJob(stages[2].Init), WithNext(EVENT_DONE, 2))
+	currStage.SetUp(WithJob(stages[STAGE_MENU].Init), WithNext(EVENT_DONE, STAGE_MENU))
 	currStage.Init()
 	currStage.Start()
 
 	last := time.Now()
 
-	for !isquit {
+	for !win.Closed() && !isquit {
 		dt := time.Since(last).Seconds()
-		currStage.Run(dt)
+		currStage.Run(win, dt)
+		win.Update()
 	}
+
 }

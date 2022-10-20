@@ -1,26 +1,32 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/faiface/pixel/pixelgl"
+	"golang.org/x/image/colornames"
+)
 
 type Stage1 struct {
-	ID      int
-	done    chan struct{}
-	isReady bool
-	inform  Inform
-	j       Job
-	nextId  int
+	id       int
+	done     chan struct{}
+	isReady  bool
+	inform   Inform
+	j        Job
+	eventMap map[int]int
 }
 
-func NewStage1(id int, f Inform) *Stage1 {
+func NewStage1(f Inform) *Stage1 {
 	return &Stage1{
-		ID:     id,
-		done:   make(chan struct{}),
-		inform: f,
+		id:       STAGE_LOADING,
+		done:     make(chan struct{}),
+		inform:   f,
+		eventMap: make(map[int]int),
 	}
 }
 
 func (s *Stage1) GetID() int {
-	return s.ID
+	return s.id
 }
 
 func (s *Stage1) Init() {
@@ -44,7 +50,7 @@ func (s *Stage1) Start() {
 		}()
 
 	}
-	fmt.Println("stage started", s.ID)
+	fmt.Println("stage started", s.id)
 }
 
 func (s *Stage1) SetJob(j Job) {
@@ -55,19 +61,20 @@ func (s *Stage1) Notify(event int) {
 	s.inform(event)
 }
 
-func (s *Stage1) Run(dt float64) {
+func (s *Stage1) Run(win *pixelgl.Window, dt float64) {
 	select {
 	case <-s.done:
 		s.Notify(EVENT_DONE)
 	default:
-		fmt.Println("Stage1 run", s.ID)
+		win.Clear(colornames.Black)
 	}
 }
 
 func (s *Stage1) SetNext(event, id int) {
-	s.nextId = id
+	s.eventMap[event] = id
 }
 
-func (s *Stage1) GetNext(event int) int {
-	return s.nextId
+func (s *Stage1) GetNext(event int) (int, bool) {
+	next, ok := s.eventMap[event]
+	return next, ok
 }
