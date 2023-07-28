@@ -43,10 +43,17 @@ func run() {
 
 		angle += 10 * dt
 		mat := pixel.IM
+
+		// flip := 1.0
+		// if dTile.HorizontalFlip {
+		// 	flip = -1.0
+		// } // .Scaled(pixel.Vec{0, 1}, flip)
+		//.ScaledXY(obj.R.Center(), pixel.Vec{-1, 0})
+
 		//		mat = mat.Rotated(pixel.ZV, angle)
 		//		mat = mat.Scaled(pixel.ZV, 1.1+angle)
-		mat = mat.Moved(win.Bounds().Center().Add(pixel.V(angle, 0)))
-		//		mat = mat.Moved(win.Bounds().Center())
+		//		mat = mat.Moved(win.Bounds().Center().Add(pixel.V(angle, 0)))
+		mat = mat.ScaledXY(pixel.ZV, pixel.V(-1, 1)).Moved(win.Bounds().Center())
 		sprite.Draw(win, mat)
 
 		win.Update()

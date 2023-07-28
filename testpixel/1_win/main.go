@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/pixelgl"
 	"golang.org/x/image/colornames"
@@ -13,6 +15,9 @@ func run() {
 		VSync:  true,
 	}
 
+	// fmt.Println("dfdf: ", int(pixelgl.KeySpace))
+	// fmt.Println("dfdf2: ", pixelgl.Button(341).String())
+
 	win, err := pixelgl.NewWindow(cfg)
 	if err != nil {
 		panic(err)
@@ -21,6 +26,9 @@ func run() {
 	win.Clear(colornames.Skyblue)
 
 	for !win.Closed() {
+		if win.Pressed(pixelgl.KeySpace) {
+			fmt.Println("dfdf: ", int(pixelgl.KeySpace))
+		}
 		win.Update()
 	}
 }
